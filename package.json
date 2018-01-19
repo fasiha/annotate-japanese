@@ -16,6 +16,7 @@
     "typescript-formatter": "^7.0.1"
   },
   "dependencies": {
+    "get-stdin": "^5.0.1",
     "mecab-async": "^0.1.2"
   }
 }

@@ -37,3 +37,9 @@ and inject into it the results of parsing & JMDICT lookups via Markdown-ready ma
 ## Requirements
 
 https://github.com/scriptin/jmdict-simplified/releases/tag/1.1.1
+
+MeCab and Unidic
+
+## Other helpful tools
+
+`$ echo 田中です。| node mecabUnidic.js | clang-format -assume-filename=foo.js`

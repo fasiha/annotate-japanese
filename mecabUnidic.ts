@@ -1,5 +1,7 @@
-var promisify = require('util').promisify;
-let spawn = require('child_process').spawn;
+const readFile = require('fs').readFile;
+const promisify = require('util').promisify;
+const spawn = require('child_process').spawn;
+const getStdin = require('get-stdin');
 import partitionBy from './partitionBy';
 
 const partOfSpeechKeys = ["代名詞", "pronoun", "副詞", "adverb", "助動詞"
@@ -137,7 +139,13 @@ export function parseMecab(original: string, result: string) {
 
 if (require.main === module) {
     (async function() {
-        const text = '今日は　良い天気だ。\n\nたのしいですか。\n\n何できた？';
-        console.log(parseMecab(text, await invokeMecab(text)));
+        let text = '今日は　良い天気だ。\n\nたのしいですか。\n\n何できた？';
+        if (process.argv.length <= 2) {
+            // no arguments, read from stdin. If stdin is empty, use default.
+            text = (await getStdin()) || text;
+        } else if (process.argv.length >= 3) {
+            text = (await Promise.all(process.argv.slice(2).map(promisify(readFile)))).join('\n');
+        }
+        console.log(JSON.stringify(parseMecab(text, await invokeMecab(text)), null, 1));
     })();
 }
