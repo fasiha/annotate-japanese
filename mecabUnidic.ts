@@ -128,7 +128,9 @@ export function parseMorpheme(raw: string[]): MaybeMorpheme {
     } else if (raw.length === 1) {
         return null;
     }
-    throw new Error('Unexpected number of columns in MeCab Unidic output');
+    console.error('Neither 1 nor 7', raw);
+    return null;
+    // throw new Error('Unexpected number of columns in MeCab Unidic output');
 }
 
 export function parseMecab(original: string, result: string) {
@@ -144,7 +146,7 @@ if (require.main === module) {
             // no arguments, read from stdin. If stdin is empty, use default.
             text = (await getStdin()) || text;
         } else if (process.argv.length >= 3) {
-            text = (await Promise.all(process.argv.slice(2).map(promisify(readFile)))).join('\n');
+            text = (await Promise.all(process.argv.slice(2).map(f => promisify(readFile)(f, 'utf8')))).join('\n');
         }
         console.log(JSON.stringify(parseMecab(text, await invokeMecab(text)), null, 1));
     })();
