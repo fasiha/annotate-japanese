@@ -1,0 +1,21 @@
+{
+  "name": "annotate-japanese",
+  "version": "1.0.0",
+  "description": "The idea is, to take a file, any text file, say, an subtitle (SRT) file like ``` 1 00:00:40,525 --> 00:00:44,363 ＜（宇佐）中学の俺は 災難続きだった＞",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^9.3.0",
+    "tape": "^4.8.0",
+    "typescript": "^2.6.2",
+    "typescript-formatter": "^7.0.1"
+  },
+  "dependencies": {
+    "mecab-async": "^0.1.2"
+  }
+}
