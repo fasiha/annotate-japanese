@@ -36,12 +36,7 @@ export async function analyzeLine(line: string, dict: jmdict.Dictionary, db: jmd
     hits.reverse(); // so longest hits come first
     flexHits.push(hits);
   }
-  return {
-    line,
-    hits: lemmaHits.map(
-        (lemmaHits, i) =>
-            ({literal: morphemes[i] ? (morphemes[i] as any).lemma : '', lemmaHits, flexHits: flexHits[i]}))
-  };
+  return {line, hits: lemmaHits.map((lemmaHits, i) => ({morpheme: morphemes[i], lemmaHits, flexHits: flexHits[i]}))};
 }
 
 export async function analyzeText(text: string, dict: jmdict.Dictionary, db: jmdict.Db) {
@@ -83,9 +78,10 @@ if (require.main === module) {
       console.log('# ' + line);
 
       // Each morpheme boundary
-      for (let {literal, lemmaHits, flexHits} of hits) {
+      for (let {morpheme, lemmaHits, flexHits} of hits) {
         if (lemmaHits.length || flexHits.length) {
-          console.log('\n## ' + literal + ' (literal)');
+          console.log('\n## ' + (morpheme ? morpheme.literal : '') +
+                      ` (literal; part of speech: ${morpheme ? morpheme.partOfSpeech.join('/') : ''})`);
           for (let lemmaHit of lemmaHits) { console.log('- ' + jmdict.displayWord(dict.words[lemmaHit])); }
         }
         if (flexHits.length) {
