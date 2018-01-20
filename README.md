@@ -43,3 +43,7 @@ MeCab and Unidic
 ## Other helpful tools
 
 `$ echo 田中です。| node mecabUnidic.js | clang-format -assume-filename=foo.js`
+
+Consider https://raw.githubusercontent.com/Kalamandea/Rikaichan/master/ext/bg/lang/deinflect.json
+
+Consider https://www.kanshudo.com/grammar/overview

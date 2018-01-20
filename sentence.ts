@@ -75,13 +75,15 @@ if (require.main === module) {
     let res = await analyzeText(text, dict, db);
     for (let {line, hits} of res) {
       if (line.length === 0) { continue; }
-      console.log('# ' + line);
+      console.log('# ' + line + ' (line)');
 
       // Each morpheme boundary
       for (let {morpheme, lemmaHits, flexHits} of hits) {
         if (lemmaHits.length || flexHits.length) {
-          console.log('\n## ' + (morpheme ? morpheme.literal : '') +
-                      ` (literal; part of speech: ${morpheme ? morpheme.partOfSpeech.join('/') : ''})`);
+          console.log('\n## ' + (morpheme ? morpheme.literal : '') + ' (' +
+                      `lexeme: ${morpheme ? morpheme.lemma : ''}/${morpheme ? morpheme.pronunciation : ''}, ` +
+                      `part of speech: ${morpheme ? morpheme.partOfSpeech.join('/') : ''}` +
+                      ')');
           for (let lemmaHit of lemmaHits) { console.log('- ' + jmdict.displayWord(dict.words[lemmaHit])); }
         }
         if (flexHits.length) {
