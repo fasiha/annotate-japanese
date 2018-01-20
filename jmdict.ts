@@ -5,22 +5,22 @@ var leveldown = require('leveldown');
 import allSubstrings from './allSubstrings';
 import readPartialFile from './readPartialFile';
 import {promisify} from 'util';
-interface Kana {
+export interface Kana {
   common: boolean;
   text: string;
   tags: any;
   appliesToKanji: string[];
 }
-interface Kanji {
+export interface Kanji {
   common: boolean;
   text: string;
   tags: any;
 }
-interface Gloss {
+export interface Gloss {
   lang: string;
   text: string;
 }
-interface Sense {
+export interface Sense {
   partOfSpeech: string[];
   gloss: Gloss[];
   appliesToKanji?: string[];
@@ -32,12 +32,12 @@ interface Sense {
   misc?: any;
   info?: any;
 }
-interface Entry {
+export interface Entry {
   kana: Kana[];
   kanji: Kanji[];
   sense: Sense[];
 }
-interface Dictionary {
+export interface Dictionary {
   version: string;
   "jmdict-date": string;
   "jmdict-revisions": string[];
@@ -54,11 +54,11 @@ export async function slurpDict(jmdictpath: string): Promise<Dictionary> {
   return JSON.parse(await promisify(fs.readFile)(jmdictpath, 'utf8'));
 }
 
-interface KV {
+export interface KV {
   key: string;
   value: any;
 }
-interface Db {
+export interface Db {
   get: any;
   put: any;
   batch: any;
@@ -95,11 +95,11 @@ const integerArrToBuffer = (arr: number[]) => Buffer.from(new Int32Array(arr).bu
 const bufferToIntegerArr = (buf: Buffer) => new Int32Array(buf.buffer);
 
 export async function queryIntegerArr(db: Db, key: string) {
-  let res;
+  let res = new Int32Array([]);
   try {
     res = bufferToIntegerArr(await db.get(key));
   } catch (e) {
-    if (e.type === 'NotFoundError') { res = []; }
+    if (e.type !== 'NotFoundError') { throw e; }
   }
   return res;
 }
