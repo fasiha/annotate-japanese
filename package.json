@@ -18,6 +18,7 @@
     "get-stdin": "^5.0.1",
     "leveldown": "^2.1.1",
     "levelup": "^2.0.1",
-    "mecab-async": "^0.1.2"
+    "mecab-async": "^0.1.2",
+    "strip-bom": "^3.0.0"
   }
 }

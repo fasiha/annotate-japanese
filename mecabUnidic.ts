@@ -2,6 +2,7 @@ const readFile = require('fs').readFile;
 const promisify = require('util').promisify;
 const spawn = require('child_process').spawn;
 const getStdin = require('get-stdin');
+const stripBom = require('strip-bom');
 import partitionBy from './partitionBy';
 
 const partOfSpeechKeys = [
@@ -307,7 +308,8 @@ export function parseMorpheme(raw: string[]): MaybeMorpheme {
 
 export function parseMecab(original: string, result: string) {
   const pieces = result.trim().split('\n').map(line => parseMorpheme(line.split('\t')));
-  const lines = partitionBy(pieces, (line, i, orig) => !line || (i && orig ? !orig[i - 1] : false));
+  // split after each newline (null), just like text
+  const lines = partitionBy(pieces, (line, i, orig) => !!(i && orig && !orig[i - 1]));
   return lines;
 }
 
@@ -317,9 +319,12 @@ if (require.main === module) {
     if (process.argv.length <= 2) {
       // no arguments, read from stdin. If stdin is empty, use default.
       text = (await getStdin()) || text;
-    } else if (process.argv.length >= 3) {
-      text = (await Promise.all(process.argv.slice(2).map(f => promisify(readFile)(f, 'utf8')))).join('\n');
+    } else {
+      text = stripBom((await Promise.all(process.argv.slice(2).map(f => promisify(readFile)(f, 'utf8')))).join('\n'))
+                 .replace(/\r/g, '');
     }
-    console.log(JSON.stringify(parseMecab(text, await invokeMecab(text)), null, 1));
+    const formatter = (arr: MaybeMorpheme[][]) =>
+        arr.map(arr => '  [ ' + arr.map(x => JSON.stringify(x)).join(',\n    ')).join(' ],\n');
+    console.log(formatter(parseMecab(text, await invokeMecab(text.trim()))));
   })();
 }
