@@ -2,7 +2,6 @@ const readFile = require('fs').readFile;
 const promisify = require('util').promisify;
 const spawn = require('child_process').spawn;
 const getStdin = require('get-stdin');
-const stripBom = require('strip-bom');
 import partitionBy from './partitionBy';
 
 const partOfSpeechKeys = [
@@ -320,7 +319,8 @@ if (require.main === module) {
       // no arguments, read from stdin. If stdin is empty, use default.
       text = (await getStdin()) || text;
     } else {
-      text = stripBom((await Promise.all(process.argv.slice(2).map(f => promisify(readFile)(f, 'utf8')))).join('\n'))
+      text = (await Promise.all(process.argv.slice(2).map(f => promisify(readFile)(f, 'utf8'))))
+                 .join('\n')
                  .replace(/\r/g, '');
     }
     const formatter = (arr: MaybeMorpheme[][]) =>

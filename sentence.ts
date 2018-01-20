@@ -1,5 +1,4 @@
 const getStdin = require('get-stdin');
-const stripBom = require('strip-bom');
 const readFile = require('fs').readFile;
 const promisify = require('util').promisify;
 import * as jmdict from './jmdict';
@@ -24,7 +23,6 @@ export async function analyzeLine(line: string, dict: jmdict.Dictionary, db: jmd
   let morphemeStarts = morphemes.map(morpheme => morpheme ? morpheme.literal.length : 0)
                            .reduce((p, c) => p.concat(p[p.length - 1] + c), [0]);
   morphemeStarts.pop(); // drop last element, which points to the length of the string
-  console.error(morphemeStarts);
   let flexHits: Hits[][] = [];
   for (let start of morphemeStarts) {
     let hits: Hits[] = [];
@@ -76,9 +74,37 @@ if (require.main === module) {
       text = (await getStdin()) || text;
     } else {
       const readFileAsync = promisify(readFile);
-      text = stripBom((await Promise.all(process.argv.slice(2).map(f => readFileAsync(f, 'utf8')))).join('\n'))
-                 .replace(/\r/g, '');
+      text =
+          (await Promise.all(process.argv.slice(2).map(f => readFileAsync(f, 'utf8')))).join('\n').replace(/\r/g, '');
     }
-    console.log(JSON.stringify(await analyzeText(text, dict, db), null, 1));
+    let res = await analyzeText(text, dict, db);
+    for (let {line, hits} of res) {
+      if (line.length === 0) { continue; }
+      console.log('# ' + line);
+
+      // Each morpheme boundary
+      for (let {literal, lemmaHits, flexHits} of hits) {
+        if (lemmaHits.length || flexHits.length) {
+          console.log('\n## ' + literal + ' (literal)');
+          for (let lemmaHit of lemmaHits) { console.log('- ' + jmdict.displayWord(dict.words[lemmaHit])); }
+        }
+        if (flexHits.length) {
+          for (let flexHit of flexHits) {
+            console.log('\n### Text-based searches: ' + flexHit.len + (flexHit.len > 1 ? ' characters' : ' character'));
+            if (flexHit.fullHits.length) {
+              console.log('\n- ' + flexHit.substring + ' (related)');
+              for (let n of flexHit.fullHits) { console.log('  - ' + jmdict.displayWord(dict.words[n])); }
+            }
+            if (flexHit.partialHits.length) {
+              console.log('\n- ' + flexHit.substring + ` (possibly related; ${flexHit.partialHits.length} matches)`);
+              for (let n of flexHit.partialHits.slice(0, 10)) {
+                console.log('  - ' + jmdict.displayWord(dict.words[n]));
+              }
+            }
+          }
+        }
+      }
+      console.log('');
+    }
   })();
 }
