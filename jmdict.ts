@@ -36,6 +36,7 @@ export interface Entry {
   kana: Kana[];
   kanji: Kanji[];
   sense: Sense[];
+  id: number;
 }
 export interface Dictionary {
   version: string;
@@ -53,12 +54,13 @@ export function displayWord(w: Entry) {
          w.sense.map((sense, n) => prefixNumber(n) + ' ' + sense.gloss.map(gloss => gloss.text).join('/')).join('; ');
 }
 
-export function displayWordPos(w: Entry, dict: Dictionary) {
+export function displayWordDetailed(w: Entry, dict: Dictionary) {
   return w.kanji.map(k => k.text).join('・') + '「' + w.kana.map(k => k.text).join('・') + '」：' +
          w.sense
              .map((sense, n) => prefixNumber(n) + ' ' + sense.gloss.map(gloss => gloss.text).join('/') + ' {*' +
                                 sense.partOfSpeech.map(pos => dict.tags[pos]).join('; ') + '*}')
-             .join('; ');
+             .join('; ') +
+         ' #' + w.id;
 }
 
 export async function slurpDict(jmdictpath: string): Promise<Dictionary> {

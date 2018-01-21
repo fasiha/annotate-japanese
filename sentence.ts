@@ -90,7 +90,7 @@ if (require.main === module) {
                       ')');
           for (let n of lemmaHits) {
             indexesSeen.add(n);
-            console.log('- ' + jmdict.displayWordPos(dict.words[n], dict));
+            console.log('- ' + jmdict.displayWordDetailed(dict.words[n], dict));
           }
         }
 
@@ -105,7 +105,7 @@ if (require.main === module) {
               for (let n of flexHit.fullHits) {
                 if (indexesSeen.has(n)) { continue; }
                 indexesSeen.add(n);
-                console.log('  - ' + jmdict.displayWordPos(dict.words[n], dict));
+                console.log('  - ' + jmdict.displayWordDetailed(dict.words[n], dict));
               }
             }
             // Whereas these are entries that have the substring appear somewhere in them.
@@ -114,7 +114,7 @@ if (require.main === module) {
               for (let n of flexHit.partialHits.slice(0, 10)) {
                 if (indexesSeen.has(n)) { continue; }
                 indexesSeen.add(n);
-                console.log('  - ' + jmdict.displayWordPos(dict.words[n], dict));
+                console.log('  - ' + jmdict.displayWordDetailed(dict.words[n], dict));
               }
             }
           }
