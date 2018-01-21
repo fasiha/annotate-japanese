@@ -45,9 +45,20 @@ export interface Dictionary {
   words: Entry[];
 }
 
+const circledNumbers = "①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳".split('');
+const prefixNumber = (n: number) => circledNumbers[n] || '⓪';
+
 export function displayWord(w: Entry) {
   return w.kanji.map(k => k.text).join('・') + '「' + w.kana.map(k => k.text).join('・') + '」：' +
-         w.sense.map(sense => sense.gloss.map(gloss => gloss.text).join('/')).join('; ');
+         w.sense.map((sense, n) => prefixNumber(n) + ' ' + sense.gloss.map(gloss => gloss.text).join('/')).join('; ');
+}
+
+export function displayWordPos(w: Entry, dict: Dictionary) {
+  return w.kanji.map(k => k.text).join('・') + '「' + w.kana.map(k => k.text).join('・') + '」：' +
+         w.sense
+             .map((sense, n) => prefixNumber(n) + ' ' + sense.gloss.map(gloss => gloss.text).join('/') + ' {*' +
+                                sense.partOfSpeech.map(pos => dict.tags[pos]).join('; ') + '*}')
+             .join('; ');
 }
 
 export async function slurpDict(jmdictpath: string): Promise<Dictionary> {
