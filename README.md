@@ -47,3 +47,5 @@ MeCab and Unidic
 Consider https://raw.githubusercontent.com/Kalamandea/Rikaichan/master/ext/bg/lang/deinflect.json
 
 Consider https://www.kanshudo.com/grammar/overview
+
+Incorporate names via JMnedict http://www.edrdg.org/enamdict/enamdict_doc.html
