@@ -74,28 +74,46 @@ if (require.main === module) {
     }
     let res = await analyzeText(text, dict, db);
     for (let {line, hits} of res) {
+      let indexesSeen: Set<number> = new Set();
       if (line.length === 0) { continue; }
       console.log('# ' + line + ' (line)');
 
       // Each morpheme boundary
       for (let {morpheme, lemmaHits, flexHits} of hits) {
+        if (morpheme && morpheme.partOfSpeech.join('').indexOf('supplementary_symbol') >= 0) { continue; }
+
+        // Show title: the morpheme
         if (lemmaHits.length || flexHits.length) {
           console.log('\n## ' + (morpheme ? morpheme.literal : '') + ' (' +
                       `lexeme: ${morpheme ? morpheme.lemma : ''}/${morpheme ? morpheme.pronunciation : ''}, ` +
                       `part of speech: ${morpheme ? morpheme.partOfSpeech.join('/') : ''}` +
                       ')');
-          for (let lemmaHit of lemmaHits) { console.log('- ' + jmdict.displayWord(dict.words[lemmaHit])); }
+          for (let n of lemmaHits) {
+            indexesSeen.add(n);
+            console.log('- ' + jmdict.displayWord(dict.words[n]));
+          }
         }
+
+        // Show the longest text-based runs found in the dictionary
         if (flexHits.length) {
+          console.log('');
           for (let flexHit of flexHits) {
-            console.log('\n### Text-based searches: ' + flexHit.len + (flexHit.len > 1 ? ' characters' : ' character'));
-            if (flexHit.fullHits.length) {
-              console.log('\n- ' + flexHit.substring + ' (related)');
-              for (let n of flexHit.fullHits) { console.log('  - ' + jmdict.displayWord(dict.words[n])); }
+            console.log('### Text-based searches: ' + flexHit.len + (flexHit.len > 1 ? ' characters' : ' character'));
+            // These are the JMdict entries that exactly match the substrings searched
+            if ((flexHit.fullHits as number[]).filter((n: number) => !indexesSeen.has(n)).length) {
+              console.log('- ' + flexHit.substring + ' (**related**)');
+              for (let n of flexHit.fullHits) {
+                if (indexesSeen.has(n)) { continue; }
+                indexesSeen.add(n);
+                console.log('  - ' + jmdict.displayWord(dict.words[n]));
+              }
             }
+            // Whereas these are entries that have the substring appear somewhere in them.
             if (flexHit.partialHits.length) {
-              console.log('\n- ' + flexHit.substring + ` (possibly related; ${flexHit.partialHits.length} matches)`);
+              console.log('- ' + flexHit.substring + ` (**possibly related;** ${flexHit.partialHits.length} matches)`);
               for (let n of flexHit.partialHits.slice(0, 10)) {
+                if (indexesSeen.has(n)) { continue; }
+                indexesSeen.add(n);
                 console.log('  - ' + jmdict.displayWord(dict.words[n]));
               }
             }
