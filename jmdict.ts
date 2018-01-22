@@ -1,10 +1,9 @@
 var fs = require('fs');
 var levelup = require('levelup');
 var leveldown = require('leveldown');
-// const encode = require('encoding-down');
 import allSubstrings from './allSubstrings';
-import readPartialFile from './readPartialFile';
 import {promisify} from 'util';
+import * as dbutils from './db';
 export interface Kana {
   common: boolean;
   text: string;
@@ -67,21 +66,9 @@ export async function slurpDict(jmdictpath: string): Promise<Dictionary> {
   return JSON.parse(await promisify(fs.readFile)(jmdictpath, 'utf8'));
 }
 
-export interface KV {
-  key: string;
-  value: any;
-}
-export interface Db {
-  get: any;
-  put: any;
-  batch: any;
-  createReadStream: any;
-  del: any;
-}
-
-export async function load(jmdictpath: string, dbpath: any) {
+export async function load(jmdictpath: string, dbpath: string) {
   let jmdict: Dictionary = await slurpDict(jmdictpath);
-  let db = levelup((leveldown(dbpath)));
+  let db = levelup(leveldown(dbpath));
 
   let ver: string;
   try {
@@ -104,34 +91,20 @@ export async function load(jmdictpath: string, dbpath: any) {
   return {jmdict, db};
 }
 
-const integerArrToBuffer = (arr: number[]) => Buffer.from(new Int32Array(arr).buffer);
-const bufferToIntegerArr = (buf: Buffer) => new Int32Array(buf.buffer);
-
-export async function queryIntegerArr(db: Db, key: string) {
+export async function queryIntegerArr(db: dbutils.Db, key: string) {
   let res = new Int32Array([]);
   try {
-    res = bufferToIntegerArr(await db.get(key));
+    res = dbutils.bufferToIntegerArr(await db.get(key));
   } catch (e) {
     if (e.type !== 'NotFoundError') { throw e; }
   }
   return res;
 }
 
-function purgedb(db: Db): Promise<any> {
-  return new Promise((resolve, reject) => {
-    let promises: Promise<any>[] = [];
-    db.createReadStream({values: false})
-        .on('data', (data: KV) => promises.push(db.del(data.key)))
-        .on('error', (err: any) => reject(err))
-        .on('close', () => resolve(Promise.all(promises)))
-        .on('end', () => resolve(Promise.all(promises)));
-  });
-}
-
 // this allSubstrings of all kana and kanji in JMdict has ~2mil entries and takes ~8 seconds to build...!
-export async function rebuilddb(jmdict: Dictionary, db: Db) {
+export async function rebuilddb(jmdict: Dictionary, db: dbutils.Db) {
   // Delete everything in the database
-  await purgedb(db);
+  await dbutils.purgedb(db);
 
   // This contains *ALL* substrings of kana and kanji in JMdict! It will have ~2million
   // string keys and each value will be an array of numbers (indexes into jmdict.words).
@@ -169,7 +142,7 @@ export async function rebuilddb(jmdict: Dictionary, db: Db) {
   const bulkchunks = 5000;
   let bulk = [];
   for (let [key, set] of substrToIdx) {
-    bulk.push({type: 'put', key: 'partial-' + key, value: integerArrToBuffer(Array.from(set))});
+    bulk.push({type: 'put', key: 'partial-' + key, value: dbutils.integerArrToBuffer(Array.from(set))});
     if (bulk.length >= bulkchunks) {
       await db.batch(bulk);
       bulk = [];
@@ -178,7 +151,7 @@ export async function rebuilddb(jmdict: Dictionary, db: Db) {
   console.error('Done committing bulk/sub');
 
   for (let [key, set] of strToIdx) {
-    bulk.push({type: 'put', key: 'full-' + key, value: integerArrToBuffer(Array.from(set))});
+    bulk.push({type: 'put', key: 'full-' + key, value: dbutils.integerArrToBuffer(Array.from(set))});
     if (bulk.length >= bulkchunks) {
       await db.batch(bulk);
       bulk = [];

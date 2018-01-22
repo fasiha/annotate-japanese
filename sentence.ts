@@ -3,6 +3,7 @@ const readFile = require('fs').readFile;
 const promisify = require('util').promisify;
 import * as jmdict from './jmdict';
 import * as unidic from './mecabUnidic';
+import * as dbutils from './db';
 
 function cumsum(arr: number[]) { return arr.reduce((p, c) => p.concat(c + (p[p.length - 1] || 0)), [] as number[]); }
 
@@ -13,7 +14,7 @@ interface Hits {
   start: number;
   len: number;
 }
-export async function analyzeLine(line: string, dict: jmdict.Dictionary, db: jmdict.Db,
+export async function analyzeLine(line: string, dict: jmdict.Dictionary, db: dbutils.Db,
                                   morphemes: unidic.MaybeMorpheme[]) {
   // Search morphemes' lemmas (lexemes, base) in dictionary
   let lemmaHits = await Promise.all(
@@ -39,7 +40,7 @@ export async function analyzeLine(line: string, dict: jmdict.Dictionary, db: jmd
   return {line, hits: lemmaHits.map((lemmaHits, i) => ({morpheme: morphemes[i], lemmaHits, flexHits: flexHits[i]}))};
 }
 
-export async function analyzeText(text: string, dict: jmdict.Dictionary, db: jmdict.Db) {
+export async function analyzeText(text: string, dict: jmdict.Dictionary, db: dbutils.Db) {
   let lines = text.trim().split('\n');
   let morphemesPerLine = unidic.parseMecab(text, await unidic.invokeMecab(text));
   if (lines.length !== morphemesPerLine.length) {
