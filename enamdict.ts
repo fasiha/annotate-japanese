@@ -41,40 +41,40 @@ function cleanEntryObject(entry: any) {
 }
 
 async function fulfillPromises(bulkPromises: any, db: dbutils.Db) {
-  let objects: any = await Promise.all(bulkPromises);
+  const objects: any = await Promise.all(bulkPromises);
   let bulk = [];
   for (let o of objects) { bulk.push({type: 'put', key: 'ent_seq-' + o.ent_seq, value: JSON.stringify(o)}); }
   return db.batch(bulk);
 };
 export async function rebuilddb(filepath: string, db: dbutils.Db) {
-  let entries: string[] =
-      (await promisify(fs.readFile)(filepath, 'utf8')).replace(/\n/g, '').match(/<entry>.*?<\/entry>/g) || [];
+  let entries: string[];
+  let rev: string = '';
+  let created = '';
+  { // do this in a block so we can immediately release `contents` memory.
+    const contents = (await promisify(fs.readFile)(filepath, 'utf8')).replace(/\n/g, '');
+    const revMatch = contents.match(/<!--\s*Rev\s*([0-9.]+)/);
+    if (revMatch) { rev = revMatch[1]; }
+    const createdMatch = contents.match(/<!--\s*JMnedict\s*created:\s*([0-9-]+)\s*-->/);
+    if (createdMatch) { created = createdMatch[1]; }
+    entries = contents.match(/<entry>.*?<\/entry>/g) || [];
+  }
   await dbutils.purgedb(db);
 
-  // JMnedict created
+  await db.batch().put('rev', rev).put('created', created).write();
+
+  // `JMnedict created`, `Rev`
+
+  let rmap: Map<string, Set<number>> = new Map();
+  let kmap: Map<string, Set<number>> = new Map();
 
   const bulkchunks = 50000;
   let bulkPromises = [];
   let i = 0;
   for (let entry of entries) {
-    bulkPromises.push(
-        promisify(parseString)(entry.replace(/<name_type>&/g, '<name_type>')).then((o: any) => cleanEntryObject(o)));
-    if (bulkPromises.length >= bulkchunks) {
-      await fulfillPromises(bulkPromises, db);
-      bulkPromises = [];
-      console.log(i);
-      i += bulkchunks;
-    }
-  }
-  await fulfillPromises(bulkPromises, db);
-
-  return new Promise((resolve, reject) => {
-    let bulk = [];
-    let rmap: Map<string, Set<number>> = new Map();
-    let kmap: Map<string, Set<number>> = new Map();
-    let stream = db.createValueStream({gt: 'ent_seq-', lte: 'ent_seq-\uffff'});
-    stream.on('data', (value: Buffer) => {
-      let o = JSON.parse(value.toString());
+    // For this string, parse XML, clean it, note the reading=>ent_seq and kanji=>ent_seq, then push the entry object to
+    // bulkPromises.
+    bulkPromises.push(promisify(parseString)(entry.replace(/<name_type>&/g, '<name_type>')).then((raw: any) => {
+      let o = cleanEntryObject(raw);
       o.k_ele.forEach((k: any) => {
         let key = k.keb;
         let val = kmap.get(key);
@@ -93,40 +93,66 @@ export async function rebuilddb(filepath: string, db: dbutils.Db) {
           rmap.set(key, new Set([o.ent_seq]));
         }
       });
-    });
+      return o;
+    }));
+    // When bulkPromises is big enough, wait for its contents to be fulfilled, then dump into leveldb, via
+    // fulfillPromises (which builds a batch object for leveldb).
+    if (bulkPromises.length >= bulkchunks) {
+      await fulfillPromises(bulkPromises, db);
+      bulkPromises = [];
+      console.log(i);
+      i += bulkchunks;
+    }
+  }
+  await fulfillPromises(bulkPromises, db);
+  // With the above done, all JMNedict entries are stored in leveldb, with keys as ent_seq's and values as the entry's
+  // JSON. Next, we have to create the reading=>ent_seq and kanji=>ent_seq mappings in leveldb.
 
-    stream.on('end', async () => {
-      let bulks = [];
-      const bulkchunks = 5000;
-      let i = 0;
-      for (let [k, v] of rmap) {
-        bulks.push({type: 'put', key: 'r-' + k, value: dbutils.integerArrToBuffer(Array.from(v))});
-        if (bulks.length > bulkchunks) {
-          await db.batch(bulks);
-          bulks = [];
-          console.log(i);
-          i += bulkchunks;
-        }
-      }
-      for (let [k, v] of kmap) {
-        bulks.push({type: 'put', key: 'k-' + k, value: dbutils.integerArrToBuffer(Array.from(v))});
-        if (bulks.length > bulkchunks) {
-          await db.batch(bulks);
-          bulks = [];
-          console.log(i);
-          i += bulkchunks;
-        }
-      }
+  // Use the same approach to throttling promises, since Node seems to choke on a million promises in-flight. bulks here
+  // will contain the batch objects for leveldb. When we've accumulate denough of those, send the batch to leveldb, wait
+  // for it to complete, and then resume with the next batch.
+  let bulks = [];
+  i = 0;
+  for (let [k, v] of rmap) {
+    bulks.push({type: 'put', key: 'r-' + k, value: dbutils.integerArrToBuffer(Array.from(v))});
+    if (bulks.length > bulkchunks) {
       await db.batch(bulks);
-      resolve(true);
-    });
-  });
+      bulks = [];
+      console.log(i);
+      i += bulkchunks;
+    }
+  }
+  for (let [k, v] of kmap) {
+    bulks.push({type: 'put', key: 'k-' + k, value: dbutils.integerArrToBuffer(Array.from(v))});
+    if (bulks.length > bulkchunks) {
+      await db.batch(bulks);
+      bulks = [];
+      console.log(i);
+      i += bulkchunks;
+    }
+  }
+  return db.batch(bulks);
 }
 
 if (require.main === module) {
   (async function() {
     let db = levelup(leveldown('level-names'));
-    // await rebuilddb("JMnedict.xml", db);
+
+    let rev, created;
+    try {
+      rev = await db.get('rev');
+      created = await db.get('created');
+    } catch (e) {
+      if (e.type === 'NotFoundError') {
+        await rebuilddb("JMnedict.xml", db);
+        rev = await db.get('rev');
+        created = await db.get('created');
+      } else {
+        throw e;
+      }
+    }
+    if (!rev || !created) { await rebuilddb("JMnedict.xml", db); }
+
     console.log((await db.get('ent_seq-5717163')).toString());
 
     dbutils.bufferToIntegerArr(await db.get('r-あいか')).forEach(async (n) => {
