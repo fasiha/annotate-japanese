@@ -328,3 +328,8 @@ Compile my TypeScript source into JavaScript: `$ ./node_modules/.bin/tsc -p .` (
 Consider https://raw.githubusercontent.com/Kalamandea/Rikaichan/master/ext/bg/lang/deinflect.json
 
 Consider https://www.kanshudo.com/grammar/overview
+
+Consider https://github.com/Pomax/node-jp-conjugations for these strings:
+- 終わらせて
+- 気づかれた
+- のぞいたりしてない
