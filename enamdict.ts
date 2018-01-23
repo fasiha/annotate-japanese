@@ -64,8 +64,7 @@ export async function rebuilddb(filepath: string, db: dbutils.Db) {
 
   // `JMnedict created`, `Rev`
 
-  let rmap: Map<string, Set<number>> = new Map();
-  let kmap: Map<string, Set<number>> = new Map();
+  let stringToNumbers: Map<string, Set<number>> = new Map();
 
   const bulkchunks = 50000;
   let bulkPromises = [];
@@ -77,20 +76,20 @@ export async function rebuilddb(filepath: string, db: dbutils.Db) {
       let o = cleanEntryObject(raw);
       o.k_ele.forEach((k: any) => {
         let key = k.keb;
-        let val = kmap.get(key);
+        let val = stringToNumbers.get(key);
         if (val) {
           val.add(o.ent_seq);
         } else {
-          kmap.set(key, new Set([o.ent_seq]));
+          stringToNumbers.set(key, new Set([o.ent_seq]));
         }
       });
       o.r_ele.forEach((r: any) => {
         let key = r.reb;
-        let val = rmap.get(key);
+        let val = stringToNumbers.get(key);
         if (val) {
           val.add(o.ent_seq);
         } else {
-          rmap.set(key, new Set([o.ent_seq]));
+          stringToNumbers.set(key, new Set([o.ent_seq]));
         }
       });
       return o;
@@ -113,17 +112,8 @@ export async function rebuilddb(filepath: string, db: dbutils.Db) {
   // for it to complete, and then resume with the next batch.
   let bulks = [];
   i = 0;
-  for (let [k, v] of rmap) {
-    bulks.push({type: 'put', key: 'r-' + k, value: dbutils.integerArrToBuffer(Array.from(v))});
-    if (bulks.length > bulkchunks) {
-      await db.batch(bulks);
-      bulks = [];
-      console.log(i);
-      i += bulkchunks;
-    }
-  }
-  for (let [k, v] of kmap) {
-    bulks.push({type: 'put', key: 'k-' + k, value: dbutils.integerArrToBuffer(Array.from(v))});
+  for (let [k, v] of stringToNumbers) {
+    bulks.push({type: 'put', key: 'full-' + k, value: dbutils.integerArrToBuffer(Array.from(v))});
     if (bulks.length > bulkchunks) {
       await db.batch(bulks);
       bulks = [];
@@ -153,15 +143,15 @@ if (require.main === module) {
     }
     if (!rev || !created) { await rebuilddb("JMnedict.xml", db); }
 
+    // number => entry
     console.log((await db.get('ent_seq-5717163')).toString());
-
-    dbutils.bufferToIntegerArr(await db.get('r-あいか')).forEach(async (n) => {
-      console.log((await db.get('ent_seq-' + n)).toString());
-    });
-
-    dbutils.bufferToIntegerArr(await db.get('k-智')).forEach(async (n) => {
-      console.log((await db.get('ent_seq-' + n)).toString());
-    });
+    // Aika => numbers => entries
+    console.log(await Promise.all(Array.from(dbutils.bufferToIntegerArr(await db.get('full-あいか')))
+                                      .map(n => db.get('ent_seq-' + n).then((b: Buffer) => b.toString()))));
+    // Satoshi => numbers => entries
+    console.log(await Promise.all(Array.from(dbutils.bufferToIntegerArr(await db.get('full-智')))
+                                      .map(n => db.get('ent_seq-' + n).then((b: Buffer) => b.toString()))));
+    // Note how Int32Array.map *has* to return an Int32Array, it can't return stringy arrays, etc., so we needed
+    // `Array.from(int32array)`.
   })();
 }
-// util.promisify(parseString)(s.replace(/&(?!(?:apos|quot|[gl]t|amp);|#)/g, '&amp;'), {normalize:true}).then(x=>t=(x))
