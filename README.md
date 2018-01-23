@@ -35,10 +35,10 @@ and inject into it the results of parsing & JMDICT lookups via Markdown-ready ma
 `
 
 ## Requirements
+- [MeCab](https://github.com/taku910/mecab) and [Unidic](https://osdn.net/projects/unidic/): Japanese language processing tools (morphological parsing, part-of-speech tagging). Both readily available on macOS via [homebrew](https://brew.sh/).
+- JMdict, Jim Breen and friends' Japanese dictionary: https://github.com/scriptin/jmdict-simplified/releases/tag/1.1.1 (this repackages the original [JMdict](http://www.edrdg.org/jmdict/j_jmdict.html)'s XML file into nice JSON).
+- [JMnedict](http://www.edrdg.org/enamdict/enamdict_doc.html), Jim Breen and friends' compilation of Japanese names (people, places, stations, etc.): http://ftp.monash.edu/pub/nihongo/JMnedict.xml.gz and gunzip to get the XML.
 
-https://github.com/scriptin/jmdict-simplified/releases/tag/1.1.1
-
-MeCab and Unidic
 
 ## Other helpful tools
 
@@ -47,5 +47,3 @@ MeCab and Unidic
 Consider https://raw.githubusercontent.com/Kalamandea/Rikaichan/master/ext/bg/lang/deinflect.json
 
 Consider https://www.kanshudo.com/grammar/overview
-
-Incorporate names via JMnedict http://www.edrdg.org/enamdict/enamdict_doc.html
