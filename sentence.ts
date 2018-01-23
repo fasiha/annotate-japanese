@@ -14,11 +14,10 @@ interface Hits {
   start: number;
   len: number;
 }
-export async function analyzeLine(line: string, dict: jmdict.Dictionary, db: dbutils.Db,
-                                  morphemes: unidic.MaybeMorpheme[]) {
+export async function analyzeLine(line: string, db: dbutils.Db, morphemes: unidic.MaybeMorpheme[]) {
   // Search morphemes' lemmas (lexemes, base) in dictionary
   let lemmaHits = await Promise.all(
-      morphemes.map(morpheme => jmdict.queryIntegerArr(db, 'full-' + (morpheme ? morpheme.lemma : ''))));
+      morphemes.map(morpheme => jmdict.queryKeyToIntegerArr(db, 'full-' + (morpheme ? morpheme.lemma : ''))));
 
   // Search runs of text starting at morpheme-starts and as long as possible
   let morphemeStarts = morphemes.map(morpheme => morpheme ? morpheme.literal.length : 0)
@@ -29,8 +28,8 @@ export async function analyzeLine(line: string, dict: jmdict.Dictionary, db: dbu
     let hits: Hits[] = [];
     for (let len = 1; len < line.length - start; len++) {
       const substring = line.substr(start, len);
-      const fullHits = await jmdict.queryIntegerArr(db, 'full-' + substring);
-      const partialHits = await jmdict.queryIntegerArr(db, 'partial-' + substring);
+      const fullHits = await jmdict.queryKeyToIntegerArr(db, 'full-' + substring);
+      const partialHits = await jmdict.queryKeyToIntegerArr(db, 'partial-' + substring);
       if (partialHits.length === 0 && fullHits.length === 0) { break; }
       hits.push({substring, fullHits, partialHits, start, len});
     }
@@ -40,7 +39,7 @@ export async function analyzeLine(line: string, dict: jmdict.Dictionary, db: dbu
   return {line, hits: lemmaHits.map((lemmaHits, i) => ({morpheme: morphemes[i], lemmaHits, flexHits: flexHits[i]}))};
 }
 
-export async function analyzeText(text: string, dict: jmdict.Dictionary, db: dbutils.Db) {
+export async function analyzeText(text: string, db: dbutils.Db) {
   let lines = text.trim().split('\n');
   let morphemesPerLine = unidic.parseMecab(text, await unidic.invokeMecab(text));
   if (lines.length !== morphemesPerLine.length) {
@@ -58,12 +57,13 @@ export async function analyzeText(text: string, dict: jmdict.Dictionary, db: dbu
       throw new Error('# MeCab lines != # input lines');
     }
   }
-  return Promise.all(morphemesPerLine.map((morphemes, i) => analyzeLine(lines[i], dict, db, morphemes)));
+  return Promise.all(morphemesPerLine.map((morphemes, i) => analyzeLine(lines[i], db, morphemes)));
 }
 
 if (require.main === module) {
   (async function() {
-    let {jmdict: dict, db} = await jmdict.load('jmdict_eng.json', './jmdict-level');
+    let {db, tags} = await jmdict.load('./level-jmdict', 'jmdict_eng.json');
+
     let text = '今日は　良い天気だ。\n\nたのしいですか。\n\n何できた？';
     if (process.argv.length <= 2) {
       // no arguments, read from stdin. If stdin is empty, use default.
@@ -73,7 +73,7 @@ if (require.main === module) {
       text =
           (await Promise.all(process.argv.slice(2).map(f => readFileAsync(f, 'utf8')))).join('\n').replace(/\r/g, '');
     }
-    let res = await analyzeText(text, dict, db);
+    let res = await analyzeText(text, db);
     for (let {line, hits} of res) {
       let indexesSeen: Set<number> = new Set();
       if (line.length === 0) { continue; }
@@ -91,7 +91,7 @@ if (require.main === module) {
                       ')');
           for (let n of lemmaHits) {
             indexesSeen.add(n);
-            console.log('- ' + jmdict.displayWordDetailed(dict.words[n], dict));
+            console.log('- ' + jmdict.displayWordDetailed(await jmdict.queryIdToEntry(db, n), tags));
           }
         }
 
@@ -106,7 +106,7 @@ if (require.main === module) {
               for (let n of flexHit.fullHits) {
                 if (indexesSeen.has(n)) { continue; }
                 indexesSeen.add(n);
-                console.log('  - ' + jmdict.displayWordDetailed(dict.words[n], dict));
+                console.log('  - ' + jmdict.displayWordDetailed(await jmdict.queryIdToEntry(db, n), tags));
               }
             }
             // Whereas these are entries that have the substring appear somewhere in them.
@@ -115,7 +115,7 @@ if (require.main === module) {
               for (let n of flexHit.partialHits.slice(0, 10)) {
                 if (indexesSeen.has(n)) { continue; }
                 indexesSeen.add(n);
-                console.log('  - ' + jmdict.displayWordDetailed(dict.words[n], dict));
+                console.log('  - ' + jmdict.displayWordDetailed(await jmdict.queryIdToEntry(db, n), tags));
               }
             }
           }

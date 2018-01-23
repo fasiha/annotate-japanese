@@ -46,7 +46,7 @@ async function fulfillPromises(bulkPromises: any, db: dbutils.Db) {
   for (let o of objects) { bulk.push({type: 'put', key: 'ent_seq-' + o.ent_seq, value: JSON.stringify(o)}); }
   return db.batch(bulk);
 };
-export async function rebuilddb(filepath: string, db: dbutils.Db) {
+export async function rebuilddb(db: dbutils.Db, filepath: string) {
   let entries: string[];
   let rev: string = '';
   let created = '';
@@ -124,24 +124,28 @@ export async function rebuilddb(filepath: string, db: dbutils.Db) {
   return db.batch(bulks);
 }
 
-if (require.main === module) {
-  (async function() {
-    let db = levelup(leveldown('level-names'));
-
-    let rev, created;
-    try {
+export async function load(dbpath: string, xmlpath: string): Promise<dbutils.Db> {
+  let db = levelup(leveldown(dbpath));
+  let rev, created;
+  try {
+    rev = await db.get('rev');
+    created = await db.get('created');
+  } catch (e) {
+    if (e.type === 'NotFoundError') {
+      await rebuilddb(db, xmlpath);
       rev = await db.get('rev');
       created = await db.get('created');
-    } catch (e) {
-      if (e.type === 'NotFoundError') {
-        await rebuilddb("JMnedict.xml", db);
-        rev = await db.get('rev');
-        created = await db.get('created');
-      } else {
-        throw e;
-      }
+    } else {
+      throw e;
     }
-    if (!rev || !created) { await rebuilddb("JMnedict.xml", db); }
+  }
+  if (!rev || !created) { await rebuilddb(db, xmlpath); }
+  return db;
+}
+
+if (require.main === module) {
+  (async function() {
+    let db = await load('level-names', 'JMnedict.xml');
 
     // number => entry
     console.log((await db.get('ent_seq-5717163')).toString());
