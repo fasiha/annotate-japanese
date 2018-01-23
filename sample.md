@@ -1,64 +1,9 @@
-# Annotate Japanese
+# いいお天気だね。 (line)
 
-The idea is, to take a file, any text file, say, an subtitle (SRT) file like
-```
-1
-00:00:40,525 --> 00:00:44,363
-＜（宇佐）中学の俺は
-災難続きだった＞
-
-2
-00:00:44,363 --> 00:00:46,865
-＜あの３年間は忘れて＞
-
-3
-00:00:46,865 --> 00:00:49,801
-＜高校生活は　心地よく＞
-
-4
-00:00:49,801 --> 00:00:52,101
-＜穏やかに過ごしたい…＞
-```
-and inject into it the results of parsing & JMDICT lookups via Markdown-ready markers. Maybe something like
-```
-1
-00:00:40,525 --> 00:00:44,363
-＜（宇佐）中学の俺は
-災難続きだった＞
-
-- Result: [宇佐]{うさ}: Name
-- Result: [中学]{ちゅうがく}: middle school; junior high school
-- Result: [俺]{おれ}: I; me
-- Result: [災難]{...}: ...
-```
-
-## Requirements
-- Install [MeCab](https://github.com/taku910/mecab) and [Unidic](https://osdn.net/projects/unidic/): Japanese language processing tools (morphological parsing, part-of-speech tagging). Both readily available on macOS via [homebrew](https://brew.sh/).
-- Download JMdict (Jim Breen and friends' [Japanese dictionary](http://www.edrdg.org/jmdict/j_jmdict.html)) via https://github.com/scriptin/jmdict-simplified/releases/tag/1.1.1 (this repackages the original's XML file into nice JSON).
-- Download [JMnedict](http://www.edrdg.org/enamdict/enamdict_doc.html), Jim Breen and friends' compilation of Japanese names (people, places, stations, etc.): http://ftp.monash.edu/pub/nihongo/JMnedict.xml.gz and gunzip to get the XML.
-- [Git](https://git-scm.com/downloads) and [Node.js](https://nodejs.org/en/download/).
-
-## Install
-Get a copy of this repository: `$ git clone https://github.com/fasiha/annotate-japanese.git && cd annotate-japanese`.
-
-Install JavaScript dependencies: `$ npm install`.
-
-Compile my TypeScript source into JavaScript: `$ ./node_modules/.bin/tsc -p .` (or just `$ make` if you can run Makefiles).
-
-## Run
-`$ echo いいお天気だね。 | node sentence.js` produces the following large chunk of Markdown. (Note I have added extra header levels to conform to this README. See the original at [sample.md](sample.md). Note how each line will be on its own top-level heading. Then the next level will contain the morphemes estimated by MeCab/UniDic, i.e., sub-words. Following each morpheme will be dictionary (JMdict and JMnedict) results for the longest-to-shortest substrings starting at the morpheme boundary. Only ten (effectively randomly chosen) partial full-text matches are shown for each substring, but all names and exact matches are shown. Basically you will get a *ton* of results, most of which are irrelevant but still helpful to get a sense of the many uses of a word or kanji. Often you will find the dictionary contains phrases longer than the morphemes MeCab identifies. Reducing this mountain of data, most of it irrelevant, to a concise glossary for studying a piece of Japanese text may be as helpful in learning it as studying the final gloss. In summary, this Markdown file contains:
-- lines
-  - morphemes
-    - exact JMdict matches for the morpheme's underlying lemma
-    - longest-to-shortest substrings starting at the morpheme start found in JMdict/JMnedict *fully* (beginning to end of substring is the dictionary's headword, as kanji or reading),
-    - longest-to-shortest substrings found in JMdict *partially*, i.e., the substring matched somewhere in the dictionary headword—only ten of these shown for some semblance of brevity.)
-
-### いいお天気だね。 (line)
-
-#### いい (lexeme: 良い/イー, part of speech: adjective_i/bound)
+## いい (lexeme: 良い/イー, part of speech: adjective_i/bound)
 - 良い・善い・好い・佳い・吉い・宜い「よい」：① good/excellent/fine/nice/pleasant/agreeable {*adjective (keiyoushi)*}; ② sufficient (can be used to turn down an offer)/ready/prepared {*adjective (keiyoushi)*}; ③ profitable (e.g. deal, business offer, etc.)/beneficial {*adjective (keiyoushi)*}; ④ OK {*adjective (keiyoushi)*} #1605820
 
-##### Text-based searches: 3 characters
+### Text-based searches: 3 characters
 - いいお (1 **names**)
   - 飯尾「いいお」 (surname) #5602090
 - いいお (**possibly related;** 7 matches)
@@ -69,7 +14,7 @@ Compile my TypeScript source into JavaScript: `$ ./node_modules/.bin/tsc -p .` (
   - 言い終わる・言終わる「いいおわる」：① to finish speaking {*Godan verb with 'ru' ending*} #2035230
   - 小股の切れ上がったいい女「こまたのきれあがったいいおんな」：① slender and smartly shaped woman {*expressions (phrases, clauses, etc.); noun (common) (futsuumeishi)*} #2117490
   - 言い終える「いいおえる」：① to finish saying {*Ichidan verb*} #2457880
-##### Text-based searches: 2 characters
+### Text-based searches: 2 characters
 - いい (12 **names**)
   - 伊井「いい」 (place/surname) #5113452
   - 依斐「いい」 (surname) #5117035
@@ -101,7 +46,7 @@ Compile my TypeScript source into JavaScript: `$ ./node_modules/.bin/tsc -p .` (
   - 愛飲「あいいん」：① usual drink/habitual drinking {*noun (common) (futsuumeishi); noun or participle which takes the aux. verb suru*} #1150530
   - 安全第一「あんぜんだいいち」：① safety first {*noun (common) (futsuumeishi)*} #1154010
   - 委員「いいん」：① committee member {*noun (common) (futsuumeishi)*} #1156100
-##### Text-based searches: 1 character
+### Text-based searches: 1 character
 - い (24 **names**)
   - 「い」 (fem) #5000800
   - 伊「い」 (place/surname) #5113401
@@ -162,22 +107,22 @@ Compile my TypeScript source into JavaScript: `$ ./node_modules/.bin/tsc -p .` (
   - 「いかす・イカす」：① to be smart/to be cool/to be sharp/to be stylish {*Godan verb with 'su' ending; intransitive verb*} #1000640
   - いかなる場合でも「いかなるばあいでも」：① in any case/whatever the case may be {*expressions (phrases, clauses, etc.)*} #1000650
 
-#### お (lexeme: 御/オ, part of speech: prefix)
+## お (lexeme: 御/オ, part of speech: prefix)
 - 御「ご」：① honorific/polite/humble prefix {*prefix*}; ② honorific suffix {*suffix*} #1270190
 - 御「ぎょ」：① honorific affix {*prefix; suffix*}; ② honorific prefix {*prefix*} #2259690
 - 御・深・美「み」：① august {*prefix*}; ② beautiful {*prefix*} #2259710
 - 大御・御「おおみ・おおん・おおむ」：① august (in ref. to the emperor or the gods)/imperial/divine {*prefix*} #2259720
 - 御「お・おん」：① honorific/polite/humble prefix {*prefix*} #2826528
 
-##### Text-based searches: 3 characters
+### Text-based searches: 3 characters
 - お天気 (**related**)
   - お天気・御天気「おてんき」：① weather {*noun (common) (futsuumeishi)*}; ② temper/mood {*noun (common) (futsuumeishi)*} #1002470
 - お天気 (**possibly related;** 2 matches)
   - お天気屋・御天気屋「おてんきや」：① moody person/temperamental person/fickle person {*noun (common) (futsuumeishi)*} #1438715
-##### Text-based searches: 2 characters
+### Text-based searches: 2 characters
 - お天 (**possibly related;** 3 matches)
   - 御天道様・お天道様「おてんとさま」：① the sun {*noun (common) (futsuumeishi)*} #2024520
-##### Text-based searches: 1 character
+### Text-based searches: 1 character
 - お (17 **names**)
   - 阿「お」 (unclass) #5100081
   - 於「お」 (surname) #5146080
@@ -216,10 +161,10 @@ Compile my TypeScript source into JavaScript: `$ ./node_modules/.bin/tsc -p .` (
   - 「おこしやす」：① welcome (in shops, etc.) {*expressions (phrases, clauses, etc.)*} #1001240
   - 「おざなりになって」：① to say commonplace things {*expressions (phrases, clauses, etc.)*} #1001250
 
-#### 天気 (lexeme: 天気/テンキ, part of speech: noun/common/general)
+## 天気 (lexeme: 天気/テンキ, part of speech: noun/common/general)
 - 天気「てんき」：① weather/the elements {*noun (common) (futsuumeishi)*}; ② fair weather/fine weather {*noun (common) (futsuumeishi)*} #1438690
 
-##### Text-based searches: 2 characters
+### Text-based searches: 2 characters
 - 天気 (**possibly related;** 26 matches)
   - 上天気「じょうてんき」：① fair weather {*noun (common) (futsuumeishi)*} #1353970
   - 天気運「てんきうん」：① weather conditions {*noun (common) (futsuumeishi)*} #1438700
@@ -228,7 +173,7 @@ Compile my TypeScript source into JavaScript: `$ ./node_modules/.bin/tsc -p .` (
   - 天気図「てんきず」：① weather map {*noun (common) (futsuumeishi)*} #1438730
   - 天気相談所「てんきそうだんじょ・てんきそうだんしょ」：① weather bureau {*noun (common) (futsuumeishi)*} #1438740
   - 天気都合「てんきつごう」：① weather conditions {*noun (common) (futsuumeishi)*} #1438750
-##### Text-based searches: 1 character
+### Text-based searches: 1 character
 - 天 (14 **names**)
   - 天「あおぎ」 (fem) #5539481
   - 天「あま」 (fem/surname) #5539482
@@ -257,13 +202,13 @@ Compile my TypeScript source into JavaScript: `$ ./node_modules/.bin/tsc -p .` (
   - 旭日昇天「きょくじつしょうてん」：① full of vigor and vitality (like the rising sun) (vigour)/being in the ascendant {*noun (common) (futsuumeishi)*} #1152800
   - 一天「いってん」：① the whole sky/firmament {*noun (common) (futsuumeishi)*} #1165040
 
-#### だ (lexeme: だ/ダ, part of speech: auxiliary_verb)
+## だ (lexeme: だ/ダ, part of speech: auxiliary_verb)
 - 兌「だ」：① dui (one of the trigrams of the I Ching: swamp, west) {*noun (common) (futsuumeishi)*} #1564200
 - 「だ」：① be/is {*copula*}; ② indicates past or completed action {*auxiliary verb*}; ③ indicates light imperative {*auxiliary verb*} #2089020
 - 駄「だ」：① poor/low-grade/trivial/insignificant/worthless {*prefix*}; ② load/pack/horse load {*noun, used as a suffix; counter*}; ③ packhorse {*noun (common) (futsuumeishi)*} #2648880
 - 打「だ」：① hitting a ball/batting/stroke {*noun (common) (futsuumeishi)*} #2820490
 
-##### Text-based searches: 2 characters
+### Text-based searches: 2 characters
 - だね (**possibly related;** 25 matches)
   - 委ねる「ゆだねる」：① to entrust (a matter) to/to leave to {*Ichidan verb; transitive verb*}; ② to abandon oneself to (e.g. pleasure)/to yield to (e.g. anger)/to devote oneself to {*Ichidan verb; transitive verb*} #1156090
   - 一粒種「ひとつぶだね」：① an only child {*noun (common) (futsuumeishi)*} #1167300
@@ -275,7 +220,7 @@ Compile my TypeScript source into JavaScript: `$ ./node_modules/.bin/tsc -p .` (
   - 変り種・変わり種「かわりだね」：① novelty/exception/hybrid/mutation/variety/freak/eccentric personality {*noun (common) (futsuumeishi)*} #1590780
   - 質草・質種「しちぐさ・しちだね」：① article for pawning {*noun (common) (futsuumeishi)*} #1654510
   - 客種「きゃくだね」：① clientele {*noun (common) (futsuumeishi)*} #1685430
-##### Text-based searches: 1 character
+### Text-based searches: 1 character
 - だ (2 **names**)
   - 池田「だ」 (surname) #5511284
   - 那「だ」 (surname) #5570136
@@ -291,7 +236,7 @@ Compile my TypeScript source into JavaScript: `$ ./node_modules/.bin/tsc -p .` (
   - 拘わる・拘る「こだわる」：① to fuss over/to be particular about {*Godan verb with 'ru' ending; intransitive verb*}; ② to be obsessive/to be fixated {*Godan verb with 'ru' ending; intransitive verb*} #1004480
   - 此間「こないだ」：① the other day/lately/recently {*adverbial noun (fukushitekimeishi); noun (temporal) (jisoumeishi)*} #1004610
 
-#### ね (lexeme: ね/ネ, part of speech: particle/phrase_final)
+## ね (lexeme: ね/ネ, part of speech: particle/phrase_final)
 - 根「ね」：① root (of a plant) {*noun (common) (futsuumeishi)*}; ② root (of a tooth, hair, etc.)/center (of a pimple, etc.) {*noun (common) (futsuumeishi)*}; ③ root root (of all evil, etc.)/source/origin/cause/basis {*noun (common) (futsuumeishi)*}; ④ one's true nature {*noun (common) (futsuumeishi)*}; ⑤ (fishing) reef {*noun (common) (futsuumeishi)*} #1290020
 - 子「ね」：① first sign of Chinese zodiac (The Rat, 11pm-1am, north, November) {*noun (common) (futsuumeishi)*} #1307780
 - 音「おと・ね・おん」：① sound/noise/report {*noun (common) (futsuumeishi); noun, used as a suffix*}; ② note {*noun (common) (futsuumeishi); noun, used as a suffix*}; ③ fame {*noun (common) (futsuumeishi); noun, used as a suffix*}; ④ Chinese-derived character reading {*noun (common) (futsuumeishi); noun, used as a suffix*} #1576900
@@ -299,7 +244,7 @@ Compile my TypeScript source into JavaScript: `$ ./node_modules/.bin/tsc -p .` (
 - 寝「ね・しん・い」：① sleep {*noun (common) (futsuumeishi)*} #1642760
 - 「ね・ねえ」：① indicates emphasis, agreement, request for confirmation, etc./is it so {*particle*}; ② hey/come on/listen {*interjection (kandoushi)*}; ③ not {*auxiliary adjective*} #2029080
 
-##### Text-based searches: 1 character
+### Text-based searches: 1 character
 - ね (3 **names**)
   - 根「ね」 (place) #5298572
   - 子「ね」 (place) #5327769
@@ -315,16 +260,3 @@ Compile my TypeScript source into JavaScript: `$ ./node_modules/.bin/tsc -p .` (
   - お尋ね者「おたずねもの」：① wanted man/person sought by the police {*noun (common) (futsuumeishi)*} #1002240
   - 「くねくね・クネクネ・ぐねぐね・グネグネ」：① winding/meandering/wriggling/wiggling/waving/swaying/twisting and turning {*adverb (fukushi); adverb taking the 'to' particle; noun or participle which takes the aux. verb suru*} #1003900
 
----
-
-## Other helpful tools
-
-`$ echo 田中です。| node mecabUnidic.js` as an alternative to the MeCab-Unidic output: this will Englishfy the parts of speech, etc., per these resources provided by the UniDic/BCCWJ authors:
-- [part-of-speech features](https://gist.github.com/masayu-a/e3eee0637c07d4019ec9)
-- [inflection features](https://gist.github.com/masayu-a/3e11168f9330e2d83a68)
-- [inflection type features](https://gist.github.com/masayu-a/b3ce862336e47736e84f)
-
-
-Consider https://raw.githubusercontent.com/Kalamandea/Rikaichan/master/ext/bg/lang/deinflect.json
-
-Consider https://www.kanshudo.com/grammar/overview
