@@ -107,6 +107,11 @@ export async function load(dbpath: string, jmdictpath: string): Promise<{db: dbu
   return {db, tags};
 }
 
+export async function queryIdToEntry(db: dbutils.Db, id: number): Promise<Entry> {
+  let buffer = await db.get('id-' + id);
+  return JSON.parse(buffer.toString());
+}
+
 export async function queryKeyToIntegerArr(db: dbutils.Db, key: string) {
   let res = new Int32Array([]);
   try {
@@ -201,11 +206,6 @@ export async function rebuilddb(db: dbutils.Db, jmdictpath: string) {
   bulk.push({type: 'put', key: 'version', value: jmdict.version});
   bulk.push({type: 'put', key: 'jmdict-date', value: jmdict['jmdict-date']});
   return db.batch(bulk);
-}
-
-export async function queryIdToEntry(db: dbutils.Db, id: number): Promise<Entry> {
-  let buffer = await db.get('id-' + id);
-  return JSON.parse(buffer.toString());
 }
 
 if (require.main === module) {

@@ -143,19 +143,47 @@ export async function load(dbpath: string, xmlpath: string): Promise<dbutils.Db>
   return db;
 }
 
+export async function queryEntseqToEntry(db: dbutils.Db, ent_seq: number) {
+  let buffer = await db.get('ent_seq-' + ent_seq);
+  return JSON.parse(buffer.toString());
+}
+
+export async function queryKeyToIntegerArr(db: dbutils.Db, key: string) {
+  let res = new Int32Array([]);
+  try {
+    res = dbutils.bufferToIntegerArr(await db.get(key));
+  } catch (e) {
+    if (e.type !== 'NotFoundError') { throw e; }
+  }
+  return res;
+}
+
+export async function queryKeyToEntries(db: dbutils.Db, key: string) {
+  let hits = await queryKeyToIntegerArr(db, key);
+  return Promise.all(Array.from(hits).map(n => queryEntseqToEntry(db, n)));
+  // Note `Int32Array.proto.map` returns another Int32Array: it can't return stringy arrays, etc., so we needed
+  // `Array.from(int32array)`.
+}
+
+export function displayEntry(entry: any) {
+  return entry.k_ele.map((k: any) => k.keb).join('・') + '「' + entry.r_ele.map((r: any) => r.reb).join('・') + '」 (' +
+         entry.trans.map((t: any) => t.name_type.join('/')).join('; ') + ') #' + entry.ent_seq;
+}
+
 if (require.main === module) {
   (async function() {
     let db = await load('level-names', 'JMnedict.xml');
 
     // number => entry
     console.log((await db.get('ent_seq-5717163')).toString());
-    // Aika => numbers => entries
-    console.log(await Promise.all(Array.from(dbutils.bufferToIntegerArr(await db.get('full-あいか')))
-                                      .map(n => db.get('ent_seq-' + n).then((b: Buffer) => b.toString()))));
-    // Satoshi => numbers => entries
-    console.log(await Promise.all(Array.from(dbutils.bufferToIntegerArr(await db.get('full-智')))
-                                      .map(n => db.get('ent_seq-' + n).then((b: Buffer) => b.toString()))));
-    // Note how Int32Array.map *has* to return an Int32Array, it can't return stringy arrays, etc., so we needed
-    // `Array.from(int32array)`.
+    console.log((await db.get('ent_seq-5298166')).toString());
+
+    // Aika (あいか) => numbers => entries
+    (await queryKeyToEntries(db, 'full-あいか')).forEach(x => console.log(displayEntry(x)));
+    // Satoshi (智) => numbers => entries
+    (await queryKeyToEntries(db, 'full-智')).forEach(x => console.log(displayEntry(x)));
+    // Kyou (like 'today', 今日)
+    (await queryKeyToEntries(db, 'full-今日')).forEach(x => console.log(displayEntry(x)));
+
   })();
 }
