@@ -283,8 +283,9 @@ export function parseMorpheme(raw: string[]): MaybeMorpheme {
     const clean = (dashed: string, obj: any) => dashed === '' ? null : dashed.split('-').map(key => {
       const res: string = obj[key];
       if (!res) {
-        console.log('key', key, 'dashed', dashed, 'raw', raw);
-        throw new Error('Unknown MeCab Unidic key encountered');
+        console.error('Unknown MeCab Unidic key encountered, key', key, 'dashed', dashed, 'raw', raw);
+        // throw new Error('Unknown MeCab Unidic key encountered');
+        return '';
       }
       return res;
     });
