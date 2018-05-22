@@ -276,7 +276,7 @@ export interface Morpheme {
   inflectionType: string[]|null;
   inflection: string[]|null;
 }
-export type MaybeMorpheme = Morpheme | null;
+export type MaybeMorpheme = Morpheme|null;
 export function parseMorpheme(raw: string[]): MaybeMorpheme {
   if (raw.length === 7) {
     const [literal, pronunciation, lemmaReading, lemma, partOfSpeechRaw, inflectionTypeRaw, inflectionRaw] = raw;
@@ -325,6 +325,7 @@ if (require.main === module) {
     }
     const formatter = (arr: MaybeMorpheme[][]) =>
         arr.map(arr => '  [ ' + arr.map(x => JSON.stringify(x)).join(',\n    ')).join(' ],\n');
-    console.log(formatter(parseMecab(text, await invokeMecab(text.trim()))));
+    const ldjsonFormatter = (arr: MaybeMorpheme[][]) => arr.map(x => JSON.stringify(x)).join('\n');
+    console.log(ldjsonFormatter(parseMecab(text, await invokeMecab(text.trim()))));
   })();
 }
